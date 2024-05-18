@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/users"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -16,6 +19,25 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/classes":
 			// Handle GET /classes
 			return handleGetClasses(), nil
+		case "/users/{id}": // Adjust this to match the API Gateway configuration
+			id, ok := request.PathParameters["id"] // Use the correct parameter name
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "ID parameter is missing",
+				}, nil
+			}
+			_, err := strconv.Atoi(id)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "Invalid ID format",
+				}, nil
+			}
+			return events.APIGatewayProxyResponse{
+				StatusCode: 200,
+				Body:       fmt.Sprintf("Hello %s", id),
+			}, nil
 		default:
 			// Handle unknown resource
 			return events.APIGatewayProxyResponse{
