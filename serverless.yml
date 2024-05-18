@@ -1,0 +1,18 @@
+service: syncode-api
+frameworkVersion: '>=1.28.0'
+provider: 
+  name: aws
+  runtime: go1.x
+  region: us-west-1
+  stage: ${opt:stage}
+functions:
+  api: 
+    handler: bin/main
+    event: 
+      - http:
+          path: ping/
+          method: get
+package:
+  patterns:
+    - '!*/**'
+    - bin/main
