@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/users"
@@ -19,8 +18,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/classes":
 			// Handle GET /classes
 			return handleGetClasses(), nil
-		case "/users/{id}": // Adjust this to match the API Gateway configuration
-			id, ok := request.PathParameters["id"] // Use the correct parameter name
+		case "/users/{id}":
+			id, ok := request.PathParameters["id"]
 			if !ok {
 				return events.APIGatewayProxyResponse{
 					StatusCode: 400,
@@ -34,9 +33,10 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 					Body:       "Invalid ID format",
 				}, nil
 			}
+			userResponse := users.HandleGetUser(id)
 			return events.APIGatewayProxyResponse{
-				StatusCode: 200,
-				Body:       fmt.Sprintf("Hello %s", id),
+				StatusCode: userResponse.StatusCode,
+				Body:       userResponse.Body,
 			}, nil
 		default:
 			// Handle unknown resource

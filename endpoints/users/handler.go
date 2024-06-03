@@ -13,9 +13,11 @@ import (
 )
 
 type User struct {
-	ID    int
-	Name  string
-	Email string
+	ID        string
+	FirstName string
+	LastName  string
+	Role      int
+	Email     string
 }
 
 var db *sql.DB
@@ -64,6 +66,34 @@ func HandleGetUsers() events.APIGatewayProxyResponse {
 	}
 }
 
+func HandleGetUser(ID string) events.APIGatewayProxyResponse {
+	user, err := getUserByID(ID)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       err.Error(),
+		}
+	}
+	if user == nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 404,
+			Body:       "User not found",
+		}
+	}
+
+	jsonData, err := json.Marshal(user)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       err.Error(),
+		}
+	}
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Body:       string(jsonData),
+	}
+}
+
 var (
 	server   = "syncode-db.mysql.database.azure.com"
 	port     = 3306
@@ -73,8 +103,7 @@ var (
 )
 
 func getUsers() ([]User, error) {
-	// Use the global db connection pool
-	rows, err := db.Query("SELECT * FROM users")
+	rows, err := db.Query("SELECT ID, FirstName, LastName, Role, Email FROM User")
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
@@ -83,7 +112,7 @@ func getUsers() ([]User, error) {
 	var users []User
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Role, &user.Email); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 		users = append(users, user)
@@ -93,4 +122,16 @@ func getUsers() ([]User, error) {
 	}
 
 	return users, nil
+}
+
+func getUserByID(ID string) (*User, error) {
+	var user User
+	err := db.QueryRow("SELECT ID, FirstName, LastName, Role, Email FROM User WHERE ID = ?", ID).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Role, &user.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // No user found
+		}
+		return nil, err
+	}
+	return &user, nil
 }
