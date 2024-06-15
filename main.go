@@ -1,8 +1,8 @@
 package main
 
 import (
-	"strconv"
-
+	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/students"
+	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/teachers"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/users"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -26,15 +26,13 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 					Body:       "ID parameter is missing",
 				}, nil
 			}
-			_, err := strconv.Atoi(id)
-			if err != nil {
-				return events.APIGatewayProxyResponse{
-					StatusCode: 400,
-					Body:       "Invalid ID format",
-				}, nil
-			}
 			userResponse := users.HandleGetUser(id)
 			return events.APIGatewayProxyResponse{
+				Headers: map[string]string{
+					"Access-Control-Allow-Origin":  "*",                // Adjust this as per your requirements
+					"Access-Control-Allow-Methods": "GET,POST,OPTIONS", // Include other methods as needed
+					"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+				},
 				StatusCode: userResponse.StatusCode,
 				Body:       userResponse.Body,
 			}, nil
@@ -43,6 +41,23 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			return events.APIGatewayProxyResponse{
 				StatusCode: 404,
 				Body:       "Resource Not Found",
+			}, nil
+		}
+	case "POST":
+		switch request.Resource {
+		case "/users":
+			requestBody := request.Body
+			return users.HandlePostUser(requestBody), nil
+		case "/students":
+			requestBody := request.Body
+			return students.HandlePostStudents(requestBody), nil
+		case "/teachers":
+			requestBody := request.Body
+			return teachers.HandlePostTeachers(requestBody), nil
+		default:
+			return events.APIGatewayProxyResponse{
+				StatusCode: 404,
+				Body:       "Resource not found",
 			}, nil
 		}
 	default:

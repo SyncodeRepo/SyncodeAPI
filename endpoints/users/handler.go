@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
-	"time"
 
+	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/database"
 	"github.com/aws/aws-lambda-go/events"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -18,26 +16,6 @@ type User struct {
 	LastName  string
 	Role      int
 	Email     string
-}
-
-var db *sql.DB
-
-func init() {
-	var err error
-	connString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", user, password, server, port, database)
-	db, err = sql.Open("mysql", connString)
-	if err != nil {
-		log.Fatalf("Error opening database: %v", err)
-	}
-
-	// Set maximum number of idle connections in the pool.
-	db.SetMaxIdleConns(10)
-
-	// Set maximum number of open connections to the database.
-	db.SetMaxOpenConns(100)
-
-	// Set the maximum lifetime of a connection.
-	db.SetConnMaxLifetime(time.Hour)
 }
 
 func HandleGetUsers() events.APIGatewayProxyResponse {
@@ -94,16 +72,52 @@ func HandleGetUser(ID string) events.APIGatewayProxyResponse {
 	}
 }
 
-var (
-	server   = "syncode-db.mysql.database.azure.com"
-	port     = 3306
-	user     = "katamyra"
-	password = os.Getenv("DB_PASS")
-	database = "syncode"
-)
+func HandlePostUser(requestBody string) events.APIGatewayProxyResponse {
+	var user User
+
+	err := json.Unmarshal(([]byte(requestBody)), &user)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",                // Adjust this as per your requirements
+				"Access-Control-Allow-Methods": "GET,POST,OPTIONS", // Include other methods as needed
+				"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+			},
+			StatusCode: 400,
+			Body:       "Error parsing request body",
+		}
+	}
+
+	stmt, err := database.Db.Prepare("INSERT INTO User (ID, FirstName, LastName, Role, Email) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",                // Adjust this as per your requirements
+				"Access-Control-Allow-Methods": "GET,POST,OPTIONS", // Include other methods as needed
+				"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+			},
+			StatusCode: 500,
+			Body:       "Failed to prepare database statement: " + err.Error(),
+		}
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.ID, user.FirstName, user.LastName, user.Role, user.Email)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "Failed to execute database statement: " + err.Error(),
+		}
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: 201,
+		Body:       "User successfully created",
+	}
+}
 
 func getUsers() ([]User, error) {
-	rows, err := db.Query("SELECT ID, FirstName, LastName, Role, Email FROM User")
+	rows, err := database.Db.Query("SELECT ID, FirstName, LastName, Role, Email FROM User")
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
@@ -126,7 +140,7 @@ func getUsers() ([]User, error) {
 
 func getUserByID(ID string) (*User, error) {
 	var user User
-	err := db.QueryRow("SELECT ID, FirstName, LastName, Role, Email FROM User WHERE ID = ?", ID).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Role, &user.Email)
+	err := database.Db.QueryRow("SELECT ID, FirstName, LastName, Role, Email FROM User WHERE ID = ?", ID).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Role, &user.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No user found
