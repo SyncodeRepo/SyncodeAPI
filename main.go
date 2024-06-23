@@ -36,6 +36,15 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 				StatusCode: userResponse.StatusCode,
 				Body:       userResponse.Body,
 			}, nil
+		case "/students/{id}/classes":
+			id, ok := request.PathParameters["id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "ID parameter is missing",
+				}, nil
+			}
+			return students.HandleGetStudentClasses(id), nil
 		default:
 			// Handle unknown resource
 			return events.APIGatewayProxyResponse{
