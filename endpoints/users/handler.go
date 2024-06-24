@@ -105,12 +105,22 @@ func HandlePostUser(requestBody string) events.APIGatewayProxyResponse {
 	_, err = stmt.Exec(user.ID, user.FirstName, user.LastName, user.Role, user.Email)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+			},
 			StatusCode: 500,
 			Body:       "Failed to execute database statement: " + err.Error(),
 		}
 	}
 
 	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+		},
 		StatusCode: 201,
 		Body:       "User successfully created",
 	}

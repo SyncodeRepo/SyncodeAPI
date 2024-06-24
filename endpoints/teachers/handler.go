@@ -2,23 +2,27 @@ package teachers
 
 import (
 	"encoding/json"
+	"log" // Add log package
 
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/database"
 	"github.com/aws/aws-lambda-go/events"
 )
 
 type Teacher struct {
-	ID         int    `json:"id"`
-	FirstName  string `json:"firstName"`
-	LastName   string `json:"lastName"`
-	Email      string `json:"email"`
-	SchoolName string `json:"schoolName"`
+	ID         string `json:"ID"`
+	FirstName  string `json:"FirstName"`
+	LastName   string `json:"LastName"`
+	Email      string `json:"Email"`
+	SchoolName string `json:"SchoolName"`
 }
 
 func HandlePostTeachers(requestBody string) events.APIGatewayProxyResponse {
+	log.Println("Received request body:", requestBody) // Log the request body
+
 	var teacher Teacher
 	err := json.Unmarshal([]byte(requestBody), &teacher)
 	if err != nil {
+		log.Println("Error unmarshalling request body:", err) // Log the error
 		return events.APIGatewayProxyResponse{
 			Headers: map[string]string{
 				"Access-Control-Allow-Origin":  "*",
@@ -44,6 +48,7 @@ func HandlePostTeachers(requestBody string) events.APIGatewayProxyResponse {
 	defer stmt.Close()
 	_, err = stmt.Exec(teacher.ID, teacher.FirstName, teacher.LastName, teacher.Email, teacher.SchoolName)
 	if err != nil {
+		log.Printf("Error executing statement: %v", err) // Log the error
 		return events.APIGatewayProxyResponse{
 			Headers: map[string]string{
 				"Access-Control-Allow-Origin":  "*",

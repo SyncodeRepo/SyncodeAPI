@@ -126,3 +126,30 @@ func HandleGetStudentClasses(studentID string) events.APIGatewayProxyResponse {
 		Body:       string(jsonData),
 	}
 }
+
+func HandleAddStudentToClass(studentID string, classID int) events.APIGatewayProxyResponse {
+	_, err := database.Db.Exec(`
+		INSERT INTO student_classes (student_id, class_id)
+		VALUES (?, ?)`, studentID, classID)
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",                // Adjust this as per your requirements
+				"Access-Control-Allow-Methods": "GET,POST,OPTIONS", // Include other methods as needed
+				"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+			},
+			StatusCode: 500,
+			Body:       "Failed to add student to class: " + err.Error(),
+		}
+	}
+
+	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin":  "*",                // Adjust this as per your requirements
+			"Access-Control-Allow-Methods": "GET,POST,OPTIONS", // Include other methods as needed
+			"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+		},
+		StatusCode: 200,
+		Body:       "Student added to class successfully",
+	}
+}

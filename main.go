@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/students"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/teachers"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/users"
@@ -57,6 +59,29 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/users":
 			requestBody := request.Body
 			return users.HandlePostUser(requestBody), nil
+		case "/students/{id}/classes":
+			id, ok := request.PathParameters["id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "ID parameter is missing",
+				}, nil
+			}
+			classIDStr, ok := request.QueryStringParameters["class_id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "class_id query parameter is missing",
+				}, nil
+			}
+			classID, err := strconv.Atoi(classIDStr)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "Invalid class_id format",
+				}, nil
+			}
+			return students.HandleAddStudentToClass(id, classID), nil
 		case "/students":
 			requestBody := request.Body
 			return students.HandlePostStudents(requestBody), nil
