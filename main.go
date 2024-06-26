@@ -6,6 +6,7 @@ import (
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/students"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/teachers"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/users"
+	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/classes"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -20,6 +21,22 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/classes":
 			// Handle GET /classes
 			return handleGetClasses(), nil
+		case "/classes/{id}":
+			id, ok := request.PathParameters["id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "ID parameter is missing",
+				}, nil
+			}
+			classResponse, err := classes.HandleGetClass(id)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 500,
+					Body:       "Internal Server Error",
+				}, err
+			}
+			return classResponse, nil
 		case "/users/{id}":
 			id, ok := request.PathParameters["id"]
 			if !ok {
