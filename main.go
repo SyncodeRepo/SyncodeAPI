@@ -3,10 +3,10 @@ package main
 import (
 	"strconv"
 
+	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/classes"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/students"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/teachers"
 	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/users"
-	"github.com/SyncodeRepo/SyncodeAPI.git/endpoints/classes"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
@@ -64,6 +64,15 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 				}, nil
 			}
 			return students.HandleGetStudentClasses(id), nil
+		case "/teachers/{id}/classes":
+			id, ok := request.PathParameters["id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "ID parameter is missing",
+				}, nil
+			}
+			return teachers.HandleGetTeacherClasses(id), nil
 		default:
 			// Handle unknown resource
 			return events.APIGatewayProxyResponse{
