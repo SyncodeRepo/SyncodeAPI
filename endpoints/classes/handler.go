@@ -26,11 +26,21 @@ func GetClassById(classId string) (events.APIGatewayProxyResponse, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return events.APIGatewayProxyResponse{
+				Headers: map[string]string{
+					"Access-Control-Allow-Origin":  "*",
+					"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+				},
 				StatusCode: 404,
 				Body:       "Class not found",
 			}, nil
 		}
 		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+			},
 			StatusCode: 500,
 			Body:       "Error retrieving class: " + err.Error(),
 		}, err
@@ -38,11 +48,21 @@ func GetClassById(classId string) (events.APIGatewayProxyResponse, error) {
 	classJson, err := json.Marshal(class)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+				"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+			},
 			StatusCode: 500,
 			Body:       "Error marshalling class data: " + err.Error(),
 		}, err
 	}
 	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+			"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+		},
 		StatusCode: 200,
 		Body:       string(classJson),
 	}, nil
