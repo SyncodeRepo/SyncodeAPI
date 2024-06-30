@@ -58,7 +58,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/students/{id}/classes":
 			id, ok := request.PathParameters["id"]
 			if !ok {
-				return events.APIGatewayProxyResponse{
+				return events.APIGatewayProxyResponse {
 					StatusCode: 400,
 					Body:       "ID parameter is missing",
 				}, nil
@@ -67,7 +67,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/teachers/{id}/classes":
 			id, ok := request.PathParameters["id"]
 			if !ok {
-				return events.APIGatewayProxyResponse{
+				return events.APIGatewayProxyResponse {
 					StatusCode: 400,
 					Body:       "ID parameter is missing",
 				}, nil
@@ -75,7 +75,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			return teachers.HandleGetTeacherClasses(id), nil
 		default:
 			// Handle unknown resource
-			return events.APIGatewayProxyResponse{
+			return events.APIGatewayProxyResponse {
 				StatusCode: 404,
 				Body:       "Resource Not Found",
 			}, nil
@@ -88,7 +88,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/students/{id}/classes":
 			id, ok := request.PathParameters["id"]
 			if !ok {
-				return events.APIGatewayProxyResponse{
+				return events.APIGatewayProxyResponse {
 					StatusCode: 400,
 					Body:       "ID parameter is missing",
 				}, nil
