@@ -58,16 +58,39 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/students/{id}/classes":
 			id, ok := request.PathParameters["id"]
 			if !ok {
-				return events.APIGatewayProxyResponse {
+				return events.APIGatewayProxyResponse{
 					StatusCode: 400,
 					Body:       "ID parameter is missing",
 				}, nil
 			}
 			return students.HandleGetStudentClasses(id), nil
+		case "/students/{id}/classes/{class_id}":
+			studentID, ok := request.PathParameters["id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "student_id parameter is missing",
+				}, nil
+			}
+			classIDStr, ok := request.PathParameters["class_id"]
+			if !ok {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "class_id parameter is missing",
+				}, nil
+			}
+			classID, err := strconv.Atoi(classIDStr)
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 400,
+					Body:       "Invalid class_id format",
+				}, nil
+			}
+			return students.HandleGetStudentClass(studentID, classID), nil
 		case "/teachers/{id}/classes":
 			id, ok := request.PathParameters["id"]
 			if !ok {
-				return events.APIGatewayProxyResponse {
+				return events.APIGatewayProxyResponse{
 					StatusCode: 400,
 					Body:       "ID parameter is missing",
 				}, nil
@@ -75,7 +98,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			return teachers.HandleGetTeacherClasses(id), nil
 		default:
 			// Handle unknown resource
-			return events.APIGatewayProxyResponse {
+			return events.APIGatewayProxyResponse{
 				StatusCode: 404,
 				Body:       "Resource Not Found",
 			}, nil
@@ -88,7 +111,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/students/{id}/classes":
 			id, ok := request.PathParameters["id"]
 			if !ok {
-				return events.APIGatewayProxyResponse {
+				return events.APIGatewayProxyResponse{
 					StatusCode: 400,
 					Body:       "ID parameter is missing",
 				}, nil

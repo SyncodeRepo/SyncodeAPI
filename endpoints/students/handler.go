@@ -216,3 +216,116 @@ func HandleAddStudentToClass(studentID string, classID int) events.APIGatewayPro
 		Body:       "Student added to class successfully",
 	}
 }
+
+func HandleGetStudentClass(studentID string, classID int) events.APIGatewayProxyResponse {
+	rows, err := database.Db.Query(`
+		SELECT c.class_id, c.class_name, c.subject_name, c.teacher_id, c.class_description, 
+		       a.assignment_id, a.assignment_name, sa.file_url, sa.submission_date, sa.grade
+		FROM class c
+		LEFT JOIN student_classes sc ON c.class_id = sc.class_id
+		LEFT JOIN assignments a ON c.class_id = a.class_id
+		LEFT JOIN student_assignments sa ON a.assignment_id = sa.assignment_id AND sa.student_id = ?
+		WHERE sc.student_id = ? AND c.class_id = ?
+		ORDER BY a.assignment_id`, studentID, studentID, classID)
+	if err != nil {
+		log.Printf("Error executing query: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "Failed to execute query: " + err.Error(),
+		}
+	}
+	defer rows.Close()
+
+	type Assignment struct {
+		AssignmentID   int     `json:"assignment_id"`
+		AssignmentName string  `json:"assignment_name"`
+		FileURL        string  `json:"file_url"`
+		SubmissionDate string  `json:"submission_date"`
+		Grade          float64 `json:"grade"`
+	}
+
+	type ClassWithAssignments struct {
+		ClassID          int          `json:"class_id"`
+		ClassName        string       `json:"class_name"`
+		SubjectName      string       `json:"subject_name"`
+		TeacherID        string       `json:"teacher_id"`
+		ClassDescription string       `json:"class_description"`
+		Assignments      []Assignment `json:"assignments"`
+	}
+
+	var classInfo *ClassWithAssignments
+	for rows.Next() {
+		var (
+			classID          int
+			className        string
+			subjectName      string
+			teacherID        string
+			classDescription string
+			assignmentID     sql.NullInt64
+			assignmentName   sql.NullString
+			fileURL          sql.NullString
+			submissionDate   sql.NullString
+			grade            sql.NullFloat64
+		)
+		if err := rows.Scan(&classID, &className, &subjectName, &teacherID, &classDescription, &assignmentID, &assignmentName, &fileURL, &submissionDate, &grade); err != nil {
+			log.Printf("Error scanning row: %v", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Body:       "Error scanning row: " + err.Error(),
+			}
+		}
+
+		if classInfo == nil {
+			classInfo = &ClassWithAssignments{
+				ClassID:          classID,
+				ClassName:        className,
+				SubjectName:      subjectName,
+				TeacherID:        teacherID,
+				ClassDescription: classDescription,
+				Assignments:      []Assignment{},
+			}
+		}
+
+		if assignmentID.Valid && assignmentName.Valid {
+			classInfo.Assignments = append(classInfo.Assignments, Assignment{
+				AssignmentID:   int(assignmentID.Int64),
+				AssignmentName: assignmentName.String,
+				FileURL:        fileURL.String,
+				SubmissionDate: submissionDate.String,
+				Grade:          grade.Float64,
+			})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "Error iterating over rows: " + err.Error(),
+		}
+	}
+
+	if classInfo == nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 404,
+			Body:       "Class not found for the given student",
+		}
+	}
+
+	jsonData, err := json.Marshal(classInfo)
+	if err != nil {
+		log.Printf("Error marshaling JSON: %v", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       "Error marshaling JSON: " + err.Error(),
+		}
+	}
+
+	return events.APIGatewayProxyResponse{
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin":  "*",                // Adjust this as per your requirements
+			"Access-Control-Allow-Methods": "GET,POST,OPTIONS", // Include other methods as needed
+			"Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+		},
+		StatusCode: 200,
+		Body:       string(jsonData),
+	}
+}
