@@ -137,6 +137,9 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		case "/teachers":
 			requestBody := request.Body
 			return teachers.HandlePostTeachers(requestBody), nil
+		case "/classes":
+			requestBody := request.Body
+			return classes.HandleAddClass(requestBody)
 		default:
 			return events.APIGatewayProxyResponse{
 				StatusCode: 404,
