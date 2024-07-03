@@ -148,3 +148,4 @@ func HandleGetTeacherClasses(teacherID string) events.APIGatewayProxyResponse {
 		Body:       string(jsonData),
 	}
 }
+
